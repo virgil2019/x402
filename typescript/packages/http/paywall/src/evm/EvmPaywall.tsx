@@ -166,8 +166,14 @@ export function EvmPaywall({ paymentRequired, onSuccessfulResponse }: EvmPaywall
       // Encode as base64 JSON for v2 header
       const paymentHeader = btoa(JSON.stringify(paymentPayload));
 
+      const currentUrl = x402.currentUrl || window.location.href;
+
+      const finalUrl = currentUrl.includes('localhost') || currentUrl === '' 
+      ? window.location.href 
+      : currentUrl;
+
       setStatus("Requesting content with payment...");
-      const response = await fetch(x402.currentUrl, {
+      const response = await fetch(finalUrl, {
         headers: {
           "PAYMENT-SIGNATURE": paymentHeader,
           "Access-Control-Expose-Headers": "PAYMENT-RESPONSE",
