@@ -350,12 +350,14 @@ export class x402HTTPResourceServer {
     // Check for payment header (v1 or v2)
     const paymentPayload = this.extractPayment(adapter);
 
+    console.log("routeConfig", routeConfig.resource, context.adapter.getUrl());
     // Create resource info, using config override if provided
     const resourceInfo = {
       url: routeConfig.resource || context.adapter.getUrl(),
       description: routeConfig.description || "",
       mimeType: routeConfig.mimeType || "",
     };
+    console.log("resourceInfo", resourceInfo);
 
     // Build requirements from all payment options
     // (this method handles resolving dynamic functions internally)
@@ -382,7 +384,10 @@ export class x402HTTPResourceServer {
       const unpaidBody = routeConfig.unpaidResponseBody
         ? await routeConfig.unpaidResponseBody(context)
         : undefined;
-
+console.log("paymentRequired", paymentRequired);
+console.log("paywallConfig", paywallConfig);
+console.log("routeConfig.customPaywallHtml", routeConfig.customPaywallHtml);
+console.log("unpaidBody", unpaidBody);
       return {
         type: "payment-error",
         response: this.createHTTPResponse(
@@ -834,7 +839,7 @@ export class x402HTTPResourceServer {
       const firstReq = accepts[0];
       if ("amount" in firstReq) {
         // V2 format
-        return parseFloat(firstReq.amount) / 1000000; // Assuming USDC with 6 decimals
+        return parseFloat(firstReq.amount); // Assuming USDC with 6 decimals
       }
     }
     return 0;
