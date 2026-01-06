@@ -34,9 +34,9 @@ export const evmPaywall: PaywallNetworkHandler = {
     config: PaywallConfig,
   ): string {
     const amount = requirement.amount
-      ? parseFloat(requirement.amount) / 1000000
+      ? parseFloat(requirement.amount)
       : requirement.maxAmountRequired
-        ? parseFloat(requirement.maxAmountRequired) / 1000000
+        ? parseFloat(requirement.maxAmountRequired)
         : 0;
 
     return getEvmPaywallHtml({
