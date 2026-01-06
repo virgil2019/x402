@@ -42,7 +42,7 @@ export const evmPaywall: PaywallNetworkHandler = {
     return getEvmPaywallHtml({
       amount,
       paymentRequired,
-      currentUrl: paymentRequired.resource?.url || config.currentUrl || "",
+      currentUrl: config.currentUrl || "",
       testnet: config.testnet ?? true,
       appName: config.appName,
       appLogo: config.appLogo,
