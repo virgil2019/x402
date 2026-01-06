@@ -6,10 +6,10 @@ import { useAccount, useSwitchChain, useWalletClient, useConnect, useDisconnect 
 import { registerExactEvmScheme } from "@x402/evm/exact/client";
 import { x402Client } from "@x402/core/client";
 import type { PaymentRequired } from "@x402/core/types";
-import { getUSDCBalance } from "./utils";
+import { getTokenBalance } from "./utils";
 
 import { Spinner } from "./Spinner";
-import { getNetworkDisplayName, isTestnetNetwork } from "../paywallUtils";
+import { getNetworkDisplayName } from "../paywallUtils";
 import { wagmiToClientSigner } from "./browserAdapter";
 
 type EvmPaywallProps = {
@@ -40,7 +40,6 @@ export function EvmPaywall({ paymentRequired, onSuccessfulResponse }: EvmPaywall
   const [selectedConnectorId, setSelectedConnectorId] = useState<string>("");
 
   const x402 = window.x402;
-  const amount = x402.amount;
 
   const firstRequirement = paymentRequired.accepts[0];
   if (!firstRequirement) {
@@ -49,9 +48,13 @@ export function EvmPaywall({ paymentRequired, onSuccessfulResponse }: EvmPaywall
 
   const network = firstRequirement.network;
   const chainName = getNetworkDisplayName(network);
-  const testnet = isTestnetNetwork(network);
 
   const chainId = parseInt(network.split(":")[1]);
+
+  // Format the amount based on token decimals
+  const tokenDecimals = (firstRequirement.extra?.decimals as number) || 6;
+  const rawAmount = x402.amount as number | string;
+  const formattedAmount = formatUnits(BigInt(rawAmount), tokenDecimals);
 
   // Find the chain from viem's chain definitions
   const paymentChain: Chain | undefined = Object.values(allChains).find(c => c.id === chainId);
@@ -69,14 +72,16 @@ export function EvmPaywall({ paymentRequired, onSuccessfulResponse }: EvmPaywall
     [paymentChain],
   );
 
-  const checkUSDCBalance = useCallback(async () => {
+  const checkTokenBalance = useCallback(async () => {
     if (!address) {
       return;
     }
-    const balance = await getUSDCBalance(publicClient, address);
-    const formattedBalance = formatUnits(balance, 6);
+    const tokenAddress = firstRequirement.asset as `0x${string}`;
+    const tokenDecimals = (firstRequirement.extra?.decimals as number) || 6;
+    const balance = await getTokenBalance(publicClient, address, tokenAddress);
+    const formattedBalance = formatUnits(balance, tokenDecimals);
     setFormattedUsdcBalance(formattedBalance);
-  }, [address, publicClient]);
+  }, [address, publicClient, firstRequirement]);
 
   const handleSwitchChain = useCallback(async () => {
     if (isCorrectChain) {
@@ -98,8 +103,8 @@ export function EvmPaywall({ paymentRequired, onSuccessfulResponse }: EvmPaywall
     }
 
     void handleSwitchChain();
-    void checkUSDCBalance();
-  }, [address, handleSwitchChain, checkUSDCBalance]);
+    void checkTokenBalance();
+  }, [address, handleSwitchChain, checkTokenBalance]);
 
   useEffect(() => {
     if (isConnected && chainId === connectedChainId) {
@@ -137,11 +142,15 @@ export function EvmPaywall({ paymentRequired, onSuccessfulResponse }: EvmPaywall
     setIsPaying(true);
 
     try {
-      setStatus("Checking USDC balance...");
-      const balance = await getUSDCBalance(publicClient, address);
+      const tokenSymbol = (firstRequirement.extra?.symbol as string) || "TOKEN";
+      const tokenAddress = firstRequirement.asset as `0x${string}`;
+      const tokenDecimals = (firstRequirement.extra?.decimals as number) || 6;
+      
+      setStatus(`Checking ${tokenSymbol} balance...`);
+      const balance = await getTokenBalance(publicClient, address, tokenAddress);
 
       if (balance === 0n) {
-        throw new Error(`Insufficient balance. Make sure you have USDC on ${chainName}`);
+        throw new Error(`Insufficient balance. Make sure you have ${tokenSymbol} on ${chainName}`);
       }
 
       setStatus("Creating payment signature...");
@@ -179,6 +188,7 @@ export function EvmPaywall({ paymentRequired, onSuccessfulResponse }: EvmPaywall
     address,
     x402,
     paymentRequired,
+    firstRequirement,
     handleSwitchChain,
     wagmiWalletClient,
     publicClient,
@@ -196,16 +206,8 @@ export function EvmPaywall({ paymentRequired, onSuccessfulResponse }: EvmPaywall
         <h1 className="title">Payment Required</h1>
         <p>
           {paymentRequired.resource?.description && `${paymentRequired.resource.description}.`} To
-          access this content, please pay ${amount} {chainName} USDC.
+          access this content, please pay ${formattedAmount} {(firstRequirement.extra?.symbol as string) || "TOKENS"} on {chainName}.
         </p>
-        {testnet && (
-          <p className="instructions">
-            Need {chainName} USDC?{" "}
-            <a href="https://faucet.circle.com/" target="_blank" rel="noopener noreferrer">
-              Get some <u>here</u>.
-            </a>
-          </p>
-        )}
       </div>
 
       <div className="content w-full">
@@ -259,14 +261,14 @@ export function EvmPaywall({ paymentRequired, onSuccessfulResponse }: EvmPaywall
                 <span className="payment-value">
                   <button className="balance-button" onClick={() => setHideBalance(prev => !prev)}>
                     {formattedUsdcBalance && !hideBalance
-                      ? `$${formattedUsdcBalance} USDC`
-                      : "••••• USDC"}
+                      ? `$${formattedUsdcBalance} ${(firstRequirement.extra?.symbol as string) || "TOKENS"}`
+                      : `••••• ${(firstRequirement.extra?.symbol as string) || "TOKENS"}`}
                   </button>
                 </span>
               </div>
               <div className="payment-row">
                 <span className="payment-label">Amount:</span>
-                <span className="payment-value">${amount} USDC</span>
+                <span className="payment-value">${formattedAmount} {(firstRequirement.extra?.symbol as string) || "TOKENS"}</span>
               </div>
               <div className="payment-row">
                 <span className="payment-label">Network:</span>

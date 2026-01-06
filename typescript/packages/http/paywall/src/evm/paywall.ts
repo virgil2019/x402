@@ -19,20 +19,13 @@ function escapeString(str: string): string {
 
 /**
  * Gets the EVM chain config
+ * Token information is now obtained from PaymentRequired.accepts array,
+ * so this function returns an empty config for backward compatibility
  *
  * @returns The EVM chain config
  */
 function getChainConfig() {
-  return {
-    base: {
-      usdcAddress: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
-      usdcName: "USDC",
-    },
-    "base-sepolia": {
-      usdcAddress: "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
-      usdcName: "USDC",
-    },
-  };
+  return {};
 }
 
 interface EvmPaywallOptions {
