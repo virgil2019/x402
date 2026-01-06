@@ -14,15 +14,20 @@
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
+    "@tanstack/react-query": "^5.28.0",
+    "@wagmi/connectors": "^5.1.0",
+    "@wagmi/core": "^2.10.0",
     "@x402/core": "workspace:*",
     "@x402/evm": "workspace:*",
-    "@x402/svm": "workspace:*",
+    "@x402/extensions": "workspace:*",
     "@x402/next": "workspace:*",
     "@x402/paywall": "workspace:*",
-    "@x402/extensions": "workspace:*",
+    "@x402/svm": "workspace:*",
     "next": "^16.0.10",
     "react": "^19.2.3",
-    "react-dom": "^19.2.3"
+    "react-dom": "^19.2.3",
+    "viem": "^2.9.0",
+    "wagmi": "^2.10.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.24.0",
@@ -32,6 +37,7 @@
     "@types/react-dom": "^19",
     "@typescript-eslint/eslint-plugin": "^8.29.1",
     "@typescript-eslint/parser": "^8.29.1",
+    "baseline-browser-mapping": "^2.9.11",
     "eslint": "^9.24.0",
     "eslint-config-next": "16.0.6",
     "eslint-plugin-import": "^2.31.0",

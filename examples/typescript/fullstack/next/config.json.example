@@ -1,0 +1,17 @@
+{
+  "faucetUrl": "http://localhost:3005",
+  "tokenAddress": "0x",
+  "spenderAddress": "0x",
+  "payment": {
+    "amount": "10000000000000000",
+    "tokenSymbol": "TOKEN NAME",
+    "tokenDecimals": 18,
+    "network": "eip155:84532"
+  },
+  "paywall": {
+    "appName": "Next x402 Demo",
+    "appLogo": "/x402-icon-blue.png",
+    "testnet": true
+  }
+}
+

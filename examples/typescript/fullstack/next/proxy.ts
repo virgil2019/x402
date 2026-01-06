@@ -1,23 +1,21 @@
 import { paymentProxy } from "@x402/next";
 import { x402ResourceServer, HTTPFacilitatorClient } from "@x402/core/server";
 import { registerExactEvmScheme } from "@x402/evm/exact/server";
-import { registerExactSvmScheme } from "@x402/svm/exact/server";
 import { createPaywall } from "@x402/paywall";
 import { evmPaywall } from "@x402/paywall/evm";
-import { svmPaywall } from "@x402/paywall/svm";
 import { declareDiscoveryExtension } from "@x402/extensions/bazaar";
+import appConfig from "./config.json";
 
 const facilitatorUrl = process.env.FACILITATOR_URL;
 export const evmAddress = process.env.EVM_ADDRESS as `0x${string}`;
-export const svmAddress = process.env.SVM_ADDRESS;
 
 if (!facilitatorUrl) {
   console.error("❌ FACILITATOR_URL environment variable is required");
   process.exit(1);
 }
 
-if (!evmAddress || !svmAddress) {
-  console.error("❌ EVM_ADDRESS and SVM_ADDRESS environment variables are required");
+if (!evmAddress) {
+  console.error("❌ EVM_ADDRESS environment variables are required");
   process.exit(1);
 }
 
@@ -29,16 +27,14 @@ export const server = new x402ResourceServer(facilitatorClient);
 
 // Register schemes
 registerExactEvmScheme(server);
-registerExactSvmScheme(server);
 
 // Build paywall
 export const paywall = createPaywall()
   .withNetwork(evmPaywall)
-  .withNetwork(svmPaywall)
   .withConfig({
-    appName: process.env.APP_NAME || "Next x402 Demo",
-    appLogo: process.env.APP_LOGO || "/x402-icon-blue.png",
-    testnet: true,
+    appName: appConfig.paywall.appName || "Next x402 Demo",
+    appLogo: appConfig.paywall.appLogo || "/x402-icon-blue.png",
+    testnet: appConfig.paywall.testnet,
   })
   .build();
 
@@ -49,16 +45,19 @@ export const proxy = paymentProxy(
       accepts: [
         {
           scheme: "exact",
-          price: "$0.001",
-          network: "eip155:84532", // base-sepolia
+          price: {
+            amount: appConfig.payment.amount,
+            asset: appConfig.spenderAddress as `0x${string}`,
+            extra: {
+              name: appConfig.payment.tokenSymbol,
+              version: "1",
+              symbol: appConfig.payment.tokenSymbol,
+              decimals: appConfig.payment.tokenDecimals,
+            },
+          },
+          network: appConfig.payment.network as `eip155:${string}`,
           payTo: evmAddress,
-        },
-        {
-          scheme: "exact",
-          price: "$0.001",
-          network: "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1", // solana devnet
-          payTo: svmAddress,
-        },
+        }
       ],
       description: "Premium music: x402 Remix",
       mimeType: "text/html",
