@@ -4,7 +4,7 @@
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt, useConnect, useChainId } from "wagmi";
+import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt, useConnect } from "wagmi";
 import { parseEther } from "viem";
 import config from "../config.json";
 
@@ -55,7 +55,6 @@ export default function Home() {
   const router = useRouter();
   const { address, isConnected } = useAccount();
   const { connectors, connect } = useConnect();
-  const chainId = useChainId();
   const [approving, setApproving] = useState(false);
   const [nextPath, setNextPath] = useState<string | null>(null);
   const [isMounted, setIsMounted] = useState(false);
@@ -117,6 +116,22 @@ export default function Home() {
     }
   }, [isConfirmed, nextPath, router]);
 
+  const getWalletChainId = async (): Promise<number | null> => {
+    if (typeof window === "undefined") return null;
+    const eth = (window as any).ethereum;
+    if (!eth || !eth.request) return null;
+    try {
+      const chainIdHex = await eth.request({ method: "eth_chainId" });
+      if (typeof chainIdHex === "string") {
+        return parseInt(chainIdHex, 16);
+      }
+      return null;
+    } catch (error) {
+      console.error("Failed to get wallet chainId:", error);
+      return null;
+    }
+  };
+
   const checkAndApproveToken = async (targetPath: string) => {
     try {
       if (!isConnected || !address) {
@@ -124,8 +139,11 @@ export default function Home() {
         return false;
       }
 
+      const walletChainId = await getWalletChainId();
+      console.log("Detected wallet chainId:", walletChainId);
+
       // Ensure we are on Base Sepolia before doing max approve
-      if (chainId !== BASE_SEPOLIA_CHAIN_ID) {
+      if (walletChainId !== BASE_SEPOLIA_CHAIN_ID) {
         alert("Please switch your wallet network to Base Sepolia (chainId 84532) before approving.");
         return false;
       }
