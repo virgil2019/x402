@@ -4,13 +4,16 @@
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt, useConnect } from "wagmi";
+import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt, useConnect, useChainId } from "wagmi";
 import { parseEther } from "viem";
 import config from "../config.json";
 
 const TOKEN_ADDRESS: `0x${string}` = config.tokenAddress as `0x${string}`;
 const SPENDER_ADDRESS: `0x${string}` = config.spenderAddress as `0x${string}`;
 const FAUCET_URL = config.faucetUrl || "http://localhost:3001"; // Faucet URL from config
+
+// Base Sepolia chain id
+const BASE_SEPOLIA_CHAIN_ID = 84532;
 
 // Allowance threshold for checking: 1 million tokens (with 18 decimals)
 const ALLOWANCE_THRESHOLD = parseEther("1000000");
@@ -52,6 +55,7 @@ export default function Home() {
   const router = useRouter();
   const { address, isConnected } = useAccount();
   const { connectors, connect } = useConnect();
+  const chainId = useChainId();
   const [approving, setApproving] = useState(false);
   const [nextPath, setNextPath] = useState<string | null>(null);
   const [isMounted, setIsMounted] = useState(false);
@@ -117,6 +121,12 @@ export default function Home() {
     try {
       if (!isConnected || !address) {
         alert("Please connect your wallet first");
+        return false;
+      }
+
+      // Ensure we are on Base Sepolia before doing max approve
+      if (chainId !== BASE_SEPOLIA_CHAIN_ID) {
+        alert("Please switch your wallet network to Base Sepolia (chainId 84532) before approving.");
         return false;
       }
 
