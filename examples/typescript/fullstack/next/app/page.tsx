@@ -56,7 +56,7 @@ const ERC20_ABI = [
 
 export default function Home() {
   const router = useRouter();
-  const { address, isConnected } = useAccount();
+  const { address, isConnected, chainId } = useAccount();
   const { connectors, connect } = useConnect();
   const [approving, setApproving] = useState(false);
   const [nextPath, setNextPath] = useState<string | null>(null);
@@ -119,22 +119,6 @@ export default function Home() {
     }
   }, [isConfirmed, nextPath, router]);
 
-  const getWalletChainId = async (): Promise<number | null> => {
-    if (typeof window === "undefined") return null;
-    const eth = (window as any).ethereum;
-    if (!eth || !eth.request) return null;
-    try {
-      const chainIdHex = await eth.request({ method: "eth_chainId" });
-      if (typeof chainIdHex === "string") {
-        return parseInt(chainIdHex, 16);
-      }
-      return null;
-    } catch (error) {
-      console.error("Failed to get wallet chainId:", error);
-      return null;
-    }
-  };
-
   const checkAndApproveToken = async (targetPath: string) => {
     try {
       if (!isConnected || !address) {
@@ -142,11 +126,10 @@ export default function Home() {
         return false;
       }
 
-      const walletChainId = await getWalletChainId();
-      console.log("Detected wallet chainId:", walletChainId, "Expected:", EXPECTED_CHAIN_ID);
+      console.log("Detected wallet chainId(from wagmi):", chainId, "Expected:", EXPECTED_CHAIN_ID);
 
       // Ensure wallet network matches config.payment.network before doing max approve
-      if (!walletChainId || walletChainId !== EXPECTED_CHAIN_ID) {
+      if (!chainId || chainId !== EXPECTED_CHAIN_ID) {
         alert(
           `Please switch your wallet network to the expected chain (config.payment.network = ${config.payment.network}) before approving.`
         );
