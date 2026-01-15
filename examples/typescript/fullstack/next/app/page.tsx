@@ -12,8 +12,11 @@ const TOKEN_ADDRESS: `0x${string}` = config.tokenAddress as `0x${string}`;
 const SPENDER_ADDRESS: `0x${string}` = config.spenderAddress as `0x${string}`;
 const FAUCET_URL = config.faucetUrl || "http://localhost:3001"; // Faucet URL from config
 
-// Base Sepolia chain id
-const BASE_SEPOLIA_CHAIN_ID = 84532;
+// Expected chain id from config.payment.network (e.g. "eip155:84532")
+const EXPECTED_CHAIN_ID =
+  typeof config.payment?.network === "string"
+    ? Number(config.payment.network.split(":")[1])
+    : NaN;
 
 // Allowance threshold for checking: 1 million tokens (with 18 decimals)
 const ALLOWANCE_THRESHOLD = parseEther("1000000");
@@ -140,11 +143,13 @@ export default function Home() {
       }
 
       const walletChainId = await getWalletChainId();
-      console.log("Detected wallet chainId:", walletChainId);
+      console.log("Detected wallet chainId:", walletChainId, "Expected:", EXPECTED_CHAIN_ID);
 
-      // Ensure we are on Base Sepolia before doing max approve
-      if (walletChainId !== BASE_SEPOLIA_CHAIN_ID) {
-        alert("Please switch your wallet network to Base Sepolia (chainId 84532) before approving.");
+      // Ensure wallet network matches config.payment.network before doing max approve
+      if (!walletChainId || walletChainId !== EXPECTED_CHAIN_ID) {
+        alert(
+          `Please switch your wallet network to the expected chain (config.payment.network = ${config.payment.network}) before approving.`
+        );
         return false;
       }
 
